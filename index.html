@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Солнечная система</title>
+<style>
+  :root {
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #05070f;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .stars, .stars2, .stars3 {
+    position: fixed;
+    inset: 0;
+    background-repeat: repeat;
+    z-index: 0;
+  }
+
+  .stars {
+    background-image:
+      radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+      radial-gradient(1px 1px at 90px 120px, #fff, transparent),
+      radial-gradient(1px 1px at 160px 60px, #fff, transparent),
+      radial-gradient(1px 1px at 220px 180px, #fff, transparent),
+      radial-gradient(2px 2px at 260px 40px, #fff, transparent);
+    background-size: 300px 300px;
+    opacity: 0.6;
+    animation: drift 120s linear infinite;
+  }
+
+  .stars2 {
+    background-image:
+      radial-gradient(1px 1px at 40px 200px, #cdd6ff, transparent),
+      radial-gradient(1px 1px at 150px 90px, #cdd6ff, transparent),
+      radial-gradient(1px 1px at 210px 240px, #cdd6ff, transparent);
+    background-size: 260px 260px;
+    opacity: 0.4;
+    animation: drift 200s linear infinite reverse;
+  }
+
+  @keyframes drift {
+    from { background-position: 0 0; }
+    to { background-position: 1000px 1000px; }
+  }
+
+  .titlebar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 34px;
+    background: rgba(15, 18, 32, 0.85);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    z-index: 10;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; }
+  .dot.red { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #27c93f; }
+
+  .titlebar span {
+    margin-left: 12px;
+    color: #cfd3e6;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+  }
+
+  .scene {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+
+  .solar-system {
+    position: relative;
+    width: 640px;
+    height: 640px;
+    max-width: 92vmin;
+    max-height: 92vmin;
+  }
+
+  .orbit {
+    position: absolute;
+    top: 50%; left: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .sun {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 64px;
+    height: 64px;
+    margin: -32px 0 0 -32px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fff6d0, #ffd35c 45%, #ff8c1a 75%, #c1440e 100%);
+    box-shadow:
+      0 0 20px 6px rgba(255, 200, 80, 0.7),
+      0 0 60px 20px rgba(255, 150, 40, 0.45),
+      0 0 120px 40px rgba(255, 100, 20, 0.25);
+    animation: pulse 4s ease-in-out infinite;
+    z-index: 2;
+  }
+
+  @keyframes pulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.15); }
+  }
+
+  .orbiter {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 100%;
+    height: 100%;
+    margin-top: 0;
+    transform-origin: center center;
+    animation-name: spin;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  @keyframes spin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to   { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+
+  .planet {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .planet::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    box-shadow: inset -4px -4px 8px rgba(0,0,0,0.55), inset 2px 2px 4px rgba(255,255,255,0.15);
+  }
+
+  .label {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 6px;
+    font-size: 10px;
+    color: rgba(255,255,255,0.55);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .planet-wrap:hover .label { opacity: 1; }
+
+  .planet-wrap {
+    position: absolute;
+    top: 0;
+    left: 50%;
+  }
+
+  .mercury { width: 6px; height: 6px; background: #b5aca2; }
+  .venus   { width: 10px; height: 10px; background: #e6c27a; }
+  .earth   { width: 11px; height: 11px; background: linear-gradient(135deg, #3b82f6 40%, #22c55e 60%); }
+  .mars    { width: 8px; height: 8px; background: #d1602f; }
+  .jupiter { width: 26px; height: 26px; background: linear-gradient(135deg, #d9b38c, #b58968 50%, #8a6a4f); }
+  .saturn  { width: 22px; height: 22px; background: linear-gradient(135deg, #e8d1a0, #c9a876); }
+  .uranus  { width: 16px; height: 16px; background: #9fd8d0; }
+  .neptune { width: 15px; height: 15px; background: #4a6bd1; }
+
+  .saturn-wrap .ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border: 3px solid rgba(230, 210, 170, 0.55);
+    border-radius: 50%;
+    transform: rotateX(75deg);
+  }
+
+  #orbit-mercury { width: 90px;  height: 90px; }
+  #orbit-venus   { width: 140px; height: 140px; }
+  #orbit-earth   { width: 195px; height: 195px; }
+  #orbit-mars    { width: 250px; height: 250px; }
+  #orbit-jupiter { width: 330px; height: 330px; }
+  #orbit-saturn  { width: 410px; height: 410px; }
+  #orbit-uranus  { width: 480px; height: 480px; }
+  #orbit-neptune { width: 550px; height: 550px; }
+
+  #spin-mercury { animation-duration: 4.4s; }
+  #spin-venus   { animation-duration: 11.2s; }
+  #spin-earth   { animation-duration: 18s; }
+  #spin-mars    { animation-duration: 34s; }
+  #spin-jupiter { animation-duration: 60s; }
+  #spin-saturn  { animation-duration: 90s; }
+  #spin-uranus  { animation-duration: 130s; }
+  #spin-neptune { animation-duration: 180s; }
+
+  .controls {
+    position: fixed;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+  }
+
+  .controls button {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #e6e8f5;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+  }
+
+  .controls button:hover {
+    background: rgba(255,255,255,0.16);
+  }
+
+  .paused .orbiter {
+    animation-play-state: paused;
+  }
+</style>
+</head>
+<body>
+
+  <div class="stars"></div>
+  <div class="stars2"></div>
+
+  <div class="titlebar">
+    <div class="dot red"></div>
+    <div class="dot yellow"></div>
+    <div class="dot green"></div>
+    <span>Солнечная система</span>
+  </div>
+
+  <div class="scene">
+    <div class="solar-system" id="solarSystem">
+      <div class="sun"></div>
+
+      <div class="orbit" id="orbit-mercury"></div>
+      <div class="orbit" id="orbit-venus"></div>
+      <div class="orbit" id="orbit-earth"></div>
+      <div class="orbit" id="orbit-mars"></div>
+      <div class="orbit" id="orbit-jupiter"></div>
+      <div class="orbit" id="orbit-saturn"></div>
+      <div class="orbit" id="orbit-uranus"></div>
+      <div class="orbit" id="orbit-neptune"></div>
+
+      <div class="orbiter" id="spin-mercury" style="width:90px;height:90px;">
+        <div class="planet-wrap"><div class="planet mercury"></div><div class="label">Меркурий</div></div>
+      </div>
+      <div class="orbiter" id="spin-venus" style="width:140px;height:140px;">
+        <div class="planet-wrap"><div class="planet venus"></div><div class="label">Венера</div></div>
+      </div>
+      <div class="orbiter" id="spin-earth" style="width:195px;height:195px;">
+        <div class="planet-wrap"><div class="planet earth"></div><div class="label">Земля</div></div>
+      </div>
+      <div class="orbiter" id="spin-mars" style="width:250px;height:250px;">
+        <div class="planet-wrap"><div class="planet mars"></div><div class="label">Марс</div></div>
+      </div>
+      <div class="orbiter" id="spin-jupiter" style="width:330px;height:330px;">
+        <div class="planet-wrap"><div class="planet jupiter"></div><div class="label">Юпитер</div></div>
+      </div>
+      <div class="orbiter" id="spin-saturn" style="width:410px;height:410px;">
+        <div class="planet-wrap saturn-wrap">
+          <div class="ring"></div>
+          <div class="planet saturn"></div>
+          <div class="label">Сатурн</div>
+        </div>
+      </div>
+      <div class="orbiter" id="spin-uranus" style="width:480px;height:480px;">
+        <div class="planet-wrap"><div class="planet uranus"></div><div class="label">Уран</div></div>
+      </div>
+      <div class="orbiter" id="spin-neptune" style="width:550px;height:550px;">
+        <div class="planet-wrap"><div class="planet neptune"></div><div class="label">Нептун</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="controls">
+    <button id="toggleBtn">Пауза</button>
+  </div>
+
+  <script>
+    const system = document.getElementById('solarSystem');
+    const btn = document.getElementById('toggleBtn');
+    let paused = false;
+
+    btn.addEventListener('click', () => {
+      paused = !paused;
+      system.classList.toggle('paused', paused);
+      btn.textContent = paused ? 'Продолжить' : 'Пауза';
+    });
+  </script>
+
+</body>
+</html>
