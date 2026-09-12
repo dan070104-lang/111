@@ -247,6 +247,17 @@
   .paused .orbiter {
     animation-play-state: paused;
   }
+
+  .controls button:focus-visible {
+    outline: 2px solid #8fb8ff;
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .orbiter, .sun, .stars, .stars2 {
+      animation: none !important;
+    }
+  }
 </style>
 </head>
 <body>
