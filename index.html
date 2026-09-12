@@ -269,13 +269,10 @@
   #spin-neptune { --dur: 180s; }
 
   .controls {
-    position: fixed;
-    bottom: 14px;
-    left: 50%;
-    transform: translateX(-50%);
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 8px;
-    z-index: 10;
   }
 
   .controls button {
@@ -303,20 +300,29 @@
     outline-offset: 2px;
   }
 
-  .hint {
+  .bottom-bar {
     position: fixed;
-    bottom: 52px;
+    bottom: 14px;
     left: 50%;
     transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    max-width: calc(100vw - 32px);
+    z-index: 10;
+  }
+
+  .hint {
     font-size: 11px;
     color: rgba(223, 227, 250, 0.5);
-    z-index: 10;
     transition: opacity 0.5s ease;
     pointer-events: none;
   }
 
   .hint.hidden {
     opacity: 0;
+    height: 0;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -436,10 +442,12 @@
     </div>
   </div>
 
-  <div class="hint" id="sunHint">Нажмите на Солнце</div>
-
-  <div class="controls">
-    <button id="toggleBtn">Пауза</button>
+  <div class="bottom-bar">
+    <div class="hint" id="sunHint">Нажмите на Солнце</div>
+    <div class="controls">
+      <button id="toggleBtn">Пауза</button>
+      <button id="resetSunBtn">Сбросить Солнце</button>
+    </div>
   </div>
 
   <script>
@@ -455,6 +463,7 @@
 
     const sun = document.querySelector('.sun');
     const sunHint = document.getElementById('sunHint');
+    const resetSunBtn = document.getElementById('resetSunBtn');
     const GROWTH_FACTOR = 1.12;
     let sunScale = 1;
 
@@ -462,6 +471,12 @@
       sunScale *= GROWTH_FACTOR;
       sun.style.transform = `scale(${sunScale})`;
       sunHint.classList.add('hidden');
+    });
+
+    resetSunBtn.addEventListener('click', () => {
+      sunScale = 1;
+      sun.style.transform = 'scale(1)';
+      sunHint.classList.remove('hidden');
     });
   </script>
 
