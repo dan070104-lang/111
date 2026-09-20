@@ -1,484 +1,849 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Солнечная система</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Финансы</title>
 <style>
   :root {
-    color-scheme: dark;
+    --bg: #f7f7f5; --card-bg: #ffffff; --text: #1f1f1f; --text-muted: #6b6b6b;
+    --border: #e3e2de; --accent: #c96442; --accent-bg: #f4e4dc; --muted-bg: #efeeea;
+    --input-bg: #ffffff; --income: #4c9a6a; --expense: #c9503f;
   }
-
-  * { box-sizing: border-box; }
-
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    background: #05070f;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  }
-
-  .stars, .stars2, .stars3 {
-    position: fixed;
-    inset: 0;
-    background-repeat: repeat;
-    z-index: 0;
-  }
-
-  .stars {
-    background-image:
-      radial-gradient(1px 1px at 20px 30px, #fff, transparent),
-      radial-gradient(1px 1px at 90px 120px, #fff, transparent),
-      radial-gradient(1px 1px at 160px 60px, #fff, transparent),
-      radial-gradient(1px 1px at 220px 180px, #fff, transparent),
-      radial-gradient(2px 2px at 260px 40px, #fff, transparent);
-    background-size: 300px 300px;
-    opacity: 0.6;
-    animation: drift 120s linear infinite;
-  }
-
-  .stars2 {
-    background-image:
-      radial-gradient(1px 1px at 40px 200px, #cdd6ff, transparent),
-      radial-gradient(1px 1px at 150px 90px, #cdd6ff, transparent),
-      radial-gradient(1px 1px at 210px 240px, #cdd6ff, transparent);
-    background-size: 260px 260px;
-    opacity: 0.4;
-    animation: drift 200s linear infinite reverse;
-  }
-
-  @keyframes drift {
-    from { background-position: 0 0; }
-    to { background-position: 1000px 1000px; }
-  }
-
-  .titlebar {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    height: 34px;
-    background: rgba(15, 18, 32, 0.85);
-    backdrop-filter: blur(6px);
-    display: flex;
-    align-items: center;
-    padding: 0 10px;
-    z-index: 10;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
-
-  .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; }
-  .dot.red { background: #ff5f56; }
-  .dot.yellow { background: #ffbd2e; }
-  .dot.green { background: #27c93f; }
-
-  .titlebar span {
-    margin-left: 12px;
-    color: #cfd3e6;
-    font-size: 13px;
-    letter-spacing: 0.3px;
-  }
-
-  .scene {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1;
-  }
-
-  .solar-system {
-    position: relative;
-    width: 640px;
-    height: 640px;
-    max-width: 92vmin;
-    max-height: 92vmin;
-  }
-
-  .orbit {
-    position: absolute;
-    top: 50%; left: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-  }
-
-  .sun {
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 64px;
-    height: 64px;
-    margin: -32px 0 0 -32px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #fff6d0, #ffd35c 45%, #ff8c1a 75%, #c1440e 100%);
-    box-shadow:
-      0 0 20px 6px rgba(255, 200, 80, 0.7),
-      0 0 60px 20px rgba(255, 150, 40, 0.45),
-      0 0 120px 40px rgba(255, 100, 20, 0.25);
-    animation: pulse 4s ease-in-out infinite;
-    z-index: 2;
-    cursor: pointer;
-    transform-origin: center center;
-    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .sun:hover {
-    filter: brightness(1.08);
-  }
-
-  @keyframes pulse {
-    0%, 100% { filter: brightness(1); }
-    50% { filter: brightness(1.15); }
-  }
-
-  .orbiter {
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 100%;
-    height: 100%;
-    margin-top: 0;
-    transform-origin: center center;
-    animation-name: spin;
-    animation-duration: var(--dur);
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-    pointer-events: none;
-  }
-
-  @keyframes spin {
-    from { transform: translate(-50%, -50%) rotate(0deg); }
-    to   { transform: translate(-50%, -50%) rotate(360deg); }
-  }
-
-  /* cancels the orbiter's rotation so the planet and its tooltip stay upright */
-  @keyframes counter-spin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(-360deg); }
-  }
-
-  .planet {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-  }
-
-  .planet::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    box-shadow: inset -4px -4px 8px rgba(0,0,0,0.55), inset 2px 2px 4px rgba(255,255,255,0.15);
-  }
-
-  /* enlarges the hoverable area beyond the planet's small visible dot */
-  .planet::before {
-    content: "";
-    position: absolute;
-    inset: -7px;
-  }
-
-  .planet-wrap {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    animation: counter-spin var(--dur) linear infinite;
-    pointer-events: auto;
-  }
-
-  .planet-wrap:hover {
-    z-index: 5;
-  }
-
-  .tooltip {
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    width: max-content;
-    max-width: 190px;
-    transform: translate(-50%, 8px);
-    padding: 8px 10px;
-    background: rgba(12, 14, 26, 0.92);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.45);
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.18s ease, transform 0.18s ease;
-    z-index: 6;
-  }
-
-  .tooltip strong {
-    display: block;
-    font-size: 12px;
-    color: #f2f4ff;
-    margin-bottom: 3px;
-  }
-
-  .tooltip span {
-    display: block;
-    font-size: 10.5px;
-    line-height: 1.4;
-    color: rgba(223, 227, 250, 0.8);
-  }
-
-  .planet-wrap:hover .tooltip {
-    opacity: 1;
-    transform: translate(-50%, 12px);
-  }
-
-  .mercury { width: 6px; height: 6px; background: #b5aca2; }
-  .venus   { width: 10px; height: 10px; background: #e6c27a; }
-  .earth   { width: 11px; height: 11px; background: linear-gradient(135deg, #3b82f6 40%, #22c55e 60%); }
-  .mars    { width: 8px; height: 8px; background: #d1602f; }
-  .jupiter { width: 26px; height: 26px; background: linear-gradient(135deg, #d9b38c, #b58968 50%, #8a6a4f); }
-  .saturn  { width: 22px; height: 22px; background: linear-gradient(135deg, #e8d1a0, #c9a876); }
-  .uranus  { width: 16px; height: 16px; background: #9fd8d0; }
-  .neptune { width: 15px; height: 15px; background: #4a6bd1; }
-
-  .saturn-wrap .ring {
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 40px;
-    height: 40px;
-    margin: -20px 0 0 -20px;
-    border: 3px solid rgba(230, 210, 170, 0.55);
-    border-radius: 50%;
-    transform: rotateX(75deg);
-  }
-
-  #orbit-mercury { width: 90px;  height: 90px; }
-  #orbit-venus   { width: 140px; height: 140px; }
-  #orbit-earth   { width: 195px; height: 195px; }
-  #orbit-mars    { width: 250px; height: 250px; }
-  #orbit-jupiter { width: 330px; height: 330px; }
-  #orbit-saturn  { width: 410px; height: 410px; }
-  #orbit-uranus  { width: 480px; height: 480px; }
-  #orbit-neptune { width: 550px; height: 550px; }
-
-  #spin-mercury { --dur: 4.4s; }
-  #spin-venus   { --dur: 11.2s; }
-  #spin-earth   { --dur: 18s; }
-  #spin-mars    { --dur: 34s; }
-  #spin-jupiter { --dur: 60s; }
-  #spin-saturn  { --dur: 90s; }
-  #spin-uranus  { --dur: 130s; }
-  #spin-neptune { --dur: 180s; }
-
-  .controls {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .controls button {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: #e6e8f5;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 12px;
-    cursor: pointer;
-    backdrop-filter: blur(4px);
-  }
-
-  .controls button:hover {
-    background: rgba(255,255,255,0.16);
-  }
-
-  .paused .orbiter,
-  .paused .planet-wrap {
-    animation-play-state: paused;
-  }
-
-  .controls button:focus-visible {
-    outline: 2px solid #8fb8ff;
-    outline-offset: 2px;
-  }
-
-  .bottom-bar {
-    position: fixed;
-    bottom: 14px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    max-width: calc(100vw - 32px);
-    z-index: 10;
-  }
-
-  .hint {
-    font-size: 11px;
-    color: rgba(223, 227, 250, 0.5);
-    transition: opacity 0.5s ease;
-    pointer-events: none;
-  }
-
-  .hint.hidden {
-    opacity: 0;
-    height: 0;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .orbiter, .planet-wrap, .sun, .stars, .stars2 {
-      animation: none !important;
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1a1a18; --card-bg: #242320; --text: #ece9e4; --text-muted: #9b9890;
+      --border: #38362f; --accent: #d97757; --accent-bg: #3a2a22; --muted-bg: #232220;
+      --input-bg: #2b2a26; --income: #6fbf8f; --expense: #e2776a;
     }
   }
+  :root[data-theme="dark"] {
+    --bg: #1a1a18; --card-bg: #242320; --text: #ece9e4; --text-muted: #9b9890;
+    --border: #38362f; --accent: #d97757; --accent-bg: #3a2a22; --muted-bg: #232220;
+    --input-bg: #2b2a26; --income: #6fbf8f; --expense: #e2776a;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; padding: calc(20px + env(safe-area-inset-top,0px)) 14px calc(80px + env(safe-area-inset-bottom,0px));
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.4; overflow-x: hidden;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 1.35rem; margin: 0 0 2px; }
+  .sub { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab-btn {
+    flex: 1; min-width: 80px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--card-bg); color: var(--text-muted); font-size: 0.85rem; cursor: pointer; font-weight: 600;
+  }
+  .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .card {
+    background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .card h2 { font-size: 0.95rem; margin: 0 0 10px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; align-items: center; }
+  input[type="date"], input[type="text"], input[type="number"], select {
+    background: var(--input-bg); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 9px; font-size: 0.88rem; font-family: inherit;
+  }
+  input[type="text"], input[type="number"] { flex: 1; min-width: 110px; }
+  button {
+    font-family: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--muted-bg); color: var(--text); padding: 7px 12px; font-size: 0.85rem;
+  }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+  .btn-block { width: 100%; }
+
+  /* overview */
+  .balance-big { font-size: 2rem; font-weight: 700; margin: 4px 0; }
+  .balance-big.negative { color: var(--expense); }
+  .balance-sub { display: flex; gap: 18px; font-size: 0.85rem; color: var(--text-muted); }
+  .balance-sub .income-val { color: var(--income); font-weight: 600; }
+  .balance-sub .expense-val { color: var(--expense); font-weight: 600; }
+  .bar-row { margin-bottom: 10px; }
+  .bar-label { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 3px; }
+  .bar-track { height: 8px; border-radius: 4px; background: var(--muted-bg); overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; }
+  .empty-note { color: var(--text-muted); font-size: 0.85rem; padding: 10px 0; }
+
+  /* transactions list */
+  .day-group { margin-bottom: 12px; }
+  .day-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
+  .tx-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px;
+    background: var(--card-bg); border: 1px solid var(--border); margin-bottom: 6px;
+  }
+  .cat-chip {
+    font-size: 0.72rem; padding: 2px 8px; border-radius: 999px; color: #1f1f1f; font-weight: 600;
+    white-space: nowrap; flex: 0 0 auto;
+  }
+  .tx-note { flex: 1; font-size: 0.9rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tx-amount { font-weight: 700; font-size: 0.9rem; white-space: nowrap; }
+  .tx-amount.income { color: var(--income); }
+  .tx-amount.expense { color: var(--expense); }
+  .edit-btn, .del-btn { flex: 0 0 auto; background: none; border: none; color: var(--text-muted); font-size: 0.9rem; padding: 2px 6px; cursor: pointer; }
+  .edit-btn:hover, .del-btn:hover { color: var(--accent); }
+  .tx-item.edit-row { flex-direction: column; align-items: stretch; gap: 6px; }
+  .tx-item.edit-row .row { flex-wrap: wrap; width: 100%; margin: 0; }
+
+  /* goals */
+  .goal-card { margin-bottom: 12px; }
+  .goal-title { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .goal-title .name { font-weight: 700; font-size: 1rem; }
+  .goal-title .pct { font-size: 0.8rem; color: var(--text-muted); }
+  .goal-amounts { font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; }
+  .goal-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .cat-list-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .cat-list-row:last-child { border-bottom: none; }
+  .footer-space { height: 20px; }
+
+  .pie-cols { display: flex; gap: 20px; flex-wrap: wrap; }
+  .date-range-row { align-items: flex-end; }
+  .date-field { display: flex; flex-direction: column; gap: 3px; font-size: 0.78rem; color: var(--text-muted); }
+  .date-field input[type="date"] { min-width: 150px; }
+  .pie-col { flex: 1; min-width: 220px; }
+  .pie-col-title { font-weight: 700; font-size: 0.88rem; margin-bottom: 8px; }
+  .pie-col svg { display: block; margin: 0 auto 10px; }
+  .legend { display: flex; flex-direction: column; gap: 4px; }
+  .legend-row { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; }
+  .legend-name { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .legend-val { color: var(--text-muted); white-space: nowrap; }
+  .chart-scroll { overflow-x: auto; }
+  .month-input-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .month-input-row:last-child { border-bottom: none; }
+  .month-input-label { flex: 0 0 70px; font-size: 0.85rem; color: var(--text-muted); }
+  .month-input-row input { flex: 1; }
 </style>
 </head>
-<body>
+<body><div class="wrap" id="app"><h1>Финансы</h1><div class="sub">Доходы, расходы и цели — в рублях</div><div class="tabs"><button class="tab-btn active" data-action="set-view" data-view="overview">Обзор</button><button class="tab-btn" data-action="set-view" data-view="transactions">Операции</button><button class="tab-btn" data-action="set-view" data-view="goals">Цели</button><button class="tab-btn" data-action="set-view" data-view="settings">Настройки</button></div><div id="overviewRoot"><div class="card"><h2>Баланс</h2><div class="balance-big">0 ₽</div><div class="balance-sub"><span>Доходы: <span class="income-val">0 ₽</span></span><span>Расходы: <span class="expense-val">0 ₽</span></span></div></div><div class="card"><h2>Диаграммы по категориям</h2><div class="row"><select id="pieRangeMode"><option value="allTime" selected>Всё время</option><option value="thisMonth">Этот месяц</option><option value="lastMonth">Прошлый месяц</option><option value="thisYear">Этот год</option><option value="custom">Свой период</option></select></div><div class="pie-cols"><div class="pie-col"><div class="pie-col-title">Расходы</div><div class="empty-note">Нет данных за период.</div><div class="legend"></div></div><div class="pie-col"><div class="pie-col-title">Доходы</div><div class="empty-note">Нет данных за период.</div><div class="legend"></div></div></div></div><div class="card"><h2>Баланс на 1-е число месяца</h2><div class="chart-scroll"><div class="empty-note">Заполни хотя бы одно значение.</div></div><div class="row" style="margin-top:6px"><button data-action="add-month-before" data-month="2026-09">← более ранний месяц</button><button data-action="add-month-after" data-month="2026-09">следующий месяц →</button></div><div class="month-input-row"><span class="month-input-label">сен 26</span><input type="number" step="1" data-action="month-balance-input" data-month="2026-09" value="" placeholder="Сумма, ₽"><button class="del-btn" data-action="del-month" data-month="2026-09">✕</button></div></div></div><div class="footer-space"></div></div><script id="state-holder" type="application/json">{"incomeCategories": [{"id": "salary", "name": "Зарплата", "color": "#BFE0B8"}, {"id": "scholarship", "name": "Стипендия", "color": "#AFCBE8"}, {"id": "freelance", "name": "Подработка", "color": "#F7CFA0"}, {"id": "other_income", "name": "Другое", "color": "#D9D9D9"}], "expenseCategories": [{"id": "food", "name": "Еда", "color": "#F3B3AE"}, {"id": "transport", "name": "Транспорт", "color": "#F7CFA0"}, {"id": "housing", "name": "Жильё", "color": "#D3C4EC"}, {"id": "fun", "name": "Развлечения", "color": "#A9E1DE"}, {"id": "health", "name": "Здоровье", "color": "#F5E2A0"}, {"id": "savings", "name": "Сбережения", "color": "#C9C0F0"}, {"id": "other_expense", "name": "Прочее", "color": "#D9D9D9"}], "transactions": [], "goals": [], "monthlyBalances": {}, "pieRange": {"mode": "allTime", "start": null, "end": null}, "view": "overview"}</script><script id="main-script">
+(function(){
+  var INITIAL_STATE = {
+    incomeCategories: [
+      { id: "salary", name: "Зарплата", color: "#BFE0B8" },
+      { id: "scholarship", name: "Стипендия", color: "#AFCBE8" },
+      { id: "freelance", name: "Подработка", color: "#F7CFA0" },
+      { id: "other_income", name: "Другое", color: "#D9D9D9" }
+    ],
+    expenseCategories: [
+      { id: "food", name: "Еда", color: "#F3B3AE" },
+      { id: "transport", name: "Транспорт", color: "#F7CFA0" },
+      { id: "housing", name: "Жильё", color: "#D3C4EC" },
+      { id: "fun", name: "Развлечения", color: "#A9E1DE" },
+      { id: "health", name: "Здоровье", color: "#F5E2A0" },
+      { id: "savings", name: "Сбережения", color: "#C9C0F0" },
+      { id: "other_expense", name: "Прочее", color: "#D9D9D9" }
+    ],
+    transactions: [],
+    goals: [],
+    monthlyBalances: {},
+    pieRange: { mode: "allTime", start: null, end: null },
+    view: "overview"
+  };
 
-  <div class="stars"></div>
-  <div class="stars2"></div>
+  var PALETTE = ["#AFCBE8","#F7CFA0","#F3B3AE","#BFE0B8","#D3C4EC","#A9E1DE","#D9D9D9","#F5E2A0","#C9C0F0","#B8DEDD"];
 
-  <div class="titlebar">
-    <div class="dot red"></div>
-    <div class="dot yellow"></div>
-    <div class="dot green"></div>
-    <span>Солнечная система</span>
-  </div>
+  var state = null;
+  var artifactApi = null;
+  var storageMode = "artifact";
+  var saveTimer = null;
+  var idCounter = 1000;
+  var editingId = null;
 
-  <div class="scene">
-    <div class="solar-system" id="solarSystem">
-      <div class="sun"></div>
+  function pad(n){ return n < 10 ? "0"+n : ""+n; }
+  function todayStr(){ var d = new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  function parseDate(s){ var p = s.split("-"); return new Date(parseInt(p[0]),parseInt(p[1])-1,parseInt(p[2])); }
+  function humanDate(s){
+    var d = parseDate(s);
+    var dows = ["вс","пн","вт","ср","чт","пт","сб"];
+    return d.getDate()+" "+["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"][d.getMonth()]+" ("+dows[d.getDay()]+")";
+  }
+  function newId(){ idCounter++; return "x"+Date.now()+"_"+idCounter; }
+  function handleConfirmClick(el, doAction){
+    if (el.dataset.armed === "1") {
+      clearTimeout(el._armTimer);
+      doAction();
+    } else {
+      el.dataset.armed = "1";
+      if (!el.dataset.origText) el.dataset.origText = el.textContent;
+      el.textContent = "Точно?";
+      el._armTimer = setTimeout(function(){
+        el.dataset.armed = "0";
+        el.textContent = el.dataset.origText;
+      }, 2500);
+    }
+  }
+  function escapeHtml(s){
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function formatMoney(n){
+    var neg = n < 0; n = Math.abs(n);
+    var rounded = Math.round(n*100)/100;
+    var parts = rounded.toFixed(2).split(".");
+    var intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    var dec = parts[1] === "00" ? "" : ","+parts[1];
+    return (neg?"−":"") + intPart + dec + " ₽";
+  }
 
-      <div class="orbit" id="orbit-mercury"></div>
-      <div class="orbit" id="orbit-venus"></div>
-      <div class="orbit" id="orbit-earth"></div>
-      <div class="orbit" id="orbit-mars"></div>
-      <div class="orbit" id="orbit-jupiter"></div>
-      <div class="orbit" id="orbit-saturn"></div>
-      <div class="orbit" id="orbit-uranus"></div>
-      <div class="orbit" id="orbit-neptune"></div>
+  function getIncomeCat(id){
+    for (var i=0;i<state.incomeCategories.length;i++) if (state.incomeCategories[i].id === id) return state.incomeCategories[i];
+    return { id:id, name:"?", color:"#cccccc" };
+  }
+  function getExpenseCat(id){
+    for (var i=0;i<state.expenseCategories.length;i++) if (state.expenseCategories[i].id === id) return state.expenseCategories[i];
+    return { id:id, name:"?", color:"#cccccc" };
+  }
+  function getCat(tx){ return tx.type === "income" ? getIncomeCat(tx.categoryId) : getExpenseCat(tx.categoryId); }
 
-      <div class="orbiter" id="spin-mercury" style="width:90px;height:90px;">
-        <div class="planet-wrap">
-          <div class="planet mercury">
-            <div class="tooltip">
-              <strong>Меркурий</strong>
-              <span>Известен с древности: упоминается в вавилонских клинописных таблицах «Мул.Апин», ок. 1000 г. до н.э.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="orbiter" id="spin-venus" style="width:140px;height:140px;">
-        <div class="planet-wrap">
-          <div class="planet venus">
-            <div class="tooltip">
-              <strong>Венера</strong>
-              <span>Известна с древности: движение зафиксировано в вавилонской «табличке Амми-Цадуки», ок. 1600 г. до н.э.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="orbiter" id="spin-earth" style="width:195px;height:195px;">
-        <div class="planet-wrap">
-          <div class="planet earth">
-            <div class="tooltip">
-              <strong>Земля</strong>
-              <span>Впервые описана как одна из планет Николаем Коперником в трактате «О вращении небесных сфер», 1543 г.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="orbiter" id="spin-mars" style="width:250px;height:250px;">
-        <div class="planet-wrap">
-          <div class="planet mars">
-            <div class="tooltip">
-              <strong>Марс</strong>
-              <span>Известен с древности: упоминания встречаются в древнеегипетских астрономических записях, ок. 1534 г. до н.э.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="orbiter" id="spin-jupiter" style="width:330px;height:330px;">
-        <div class="planet-wrap">
-          <div class="planet jupiter">
-            <div class="tooltip">
-              <strong>Юпитер</strong>
-              <span>Известен с древности: систематические наблюдения вели вавилонские астрономы в VII веке до н.э.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="orbiter" id="spin-saturn" style="width:410px;height:410px;">
-        <div class="planet-wrap saturn-wrap">
-          <div class="ring"></div>
-          <div class="planet saturn">
-            <div class="tooltip">
-              <strong>Сатурн</strong>
-              <span>Известен с древности. Кольца впервые увидел Галилео Галилей в 1610 г.; их природу объяснил Христиан Гюйгенс в 1655 г.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="orbiter" id="spin-uranus" style="width:480px;height:480px;">
-        <div class="planet-wrap">
-          <div class="planet uranus">
-            <div class="tooltip">
-              <strong>Уран</strong>
-              <span>Открыт Уильямом Гершелем 13 марта 1781 г. — первая планета, найденная с помощью телескопа.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="orbiter" id="spin-neptune" style="width:550px;height:550px;">
-        <div class="planet-wrap">
-          <div class="planet neptune">
-            <div class="tooltip">
-              <strong>Нептун</strong>
-              <span>Открыт Иоганном Галле 23 сентября 1846 г. по расчётам Урбена Леверье.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <div class="bottom-bar">
-    <div class="hint" id="sunHint">Нажмите на Солнце</div>
-    <div class="controls">
-      <button id="toggleBtn">Пауза</button>
-      <button id="resetSunBtn">Сбросить Солнце</button>
-    </div>
-  </div>
-
-  <script>
-    const system = document.getElementById('solarSystem');
-    const btn = document.getElementById('toggleBtn');
-    let paused = false;
-
-    btn.addEventListener('click', () => {
-      paused = !paused;
-      system.classList.toggle('paused', paused);
-      btn.textContent = paused ? 'Продолжить' : 'Пауза';
+  function totals(s){
+    var income = 0, expense = 0;
+    s.transactions.forEach(function(t){
+      if (t.type === "income") income += t.amount; else expense += t.amount;
     });
+    return { income: income, expense: expense, balance: income - expense };
+  }
 
-    const sun = document.querySelector('.sun');
-    const sunHint = document.getElementById('sunHint');
-    const resetSunBtn = document.getElementById('resetSunBtn');
-    const GROWTH_FACTOR = 1.12;
-    let sunScale = 1;
-
-    sun.addEventListener('click', () => {
-      sunScale *= GROWTH_FACTOR;
-      sun.style.transform = `scale(${sunScale})`;
-      sunHint.classList.add('hidden');
+  function expenseByCategory(s){
+    var map = {};
+    s.transactions.forEach(function(t){
+      if (t.type !== "expense") return;
+      map[t.categoryId] = (map[t.categoryId] || 0) + t.amount;
     });
+    return map;
+  }
 
-    resetSunBtn.addEventListener('click', () => {
-      sunScale = 1;
-      sun.style.transform = 'scale(1)';
-      sunHint.classList.remove('hidden');
+  function goalSaved(s, goalId){
+    var sum = 0;
+    s.transactions.forEach(function(t){ if (t.goalId === goalId) sum += t.amount; });
+    return sum;
+  }
+
+  // ---------- period filter for pies ----------
+  var MONTHS_SHORT = ["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+
+  function periodBounds(range){
+    var now = new Date();
+    var y = now.getFullYear(), m = now.getMonth();
+    function fmt(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+    if (range.mode === "thisMonth") return { start: fmt(new Date(y,m,1)), end: fmt(new Date(y,m+1,0)) };
+    if (range.mode === "lastMonth") return { start: fmt(new Date(y,m-1,1)), end: fmt(new Date(y,m,0)) };
+    if (range.mode === "thisYear") return { start: fmt(new Date(y,0,1)), end: fmt(new Date(y,11,31)) };
+    if (range.mode === "custom") return { start: range.start || "0000-01-01", end: range.end || "9999-12-31" };
+    return { start: null, end: null };
+  }
+  function filterByPeriod(list, bounds){
+    if (!bounds.start && !bounds.end) return list;
+    return list.filter(function(t){ return t.date >= bounds.start && t.date <= bounds.end; });
+  }
+  function aggregateByCategory(list, type, catLookup){
+    var map = {};
+    list.forEach(function(t){ if (t.type === type) map[t.categoryId] = (map[t.categoryId]||0) + t.amount; });
+    var ids = Object.keys(map);
+    var data = ids.map(function(id){ var c = catLookup(id); return { label: c.name, value: map[id], color: c.color }; });
+    data.sort(function(a,b){ return b.value - a.value; });
+    return data;
+  }
+
+  // ---------- SVG pie chart ----------
+  function polarPoint(cx,cy,r,angleDeg){
+    var rad = (angleDeg-90) * Math.PI/180;
+    return { x: cx + r*Math.cos(rad), y: cy + r*Math.sin(rad) };
+  }
+  function pieSVG(data, size){
+    var total = data.reduce(function(s,d){ return s+d.value; }, 0);
+    if (!total) return '<div class="empty-note">Нет данных за период.</div>';
+    var r = size/2, cx = r, cy = r;
+    var cum = 0, paths = "";
+    data.forEach(function(d){
+      var startA = cum/total*360;
+      cum += d.value;
+      var endA = cum/total*360;
+      var titleText = escapeHtml(d.label)+": "+formatMoney(d.value)+" ("+Math.round(d.value/total*100)+"%)";
+      if (endA - startA >= 359.99) {
+        paths += '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+d.color+'"><title>'+titleText+'</title></circle>';
+      } else {
+        var p1 = polarPoint(cx,cy,r,startA), p2 = polarPoint(cx,cy,r,endA);
+        var large = (endA-startA) > 180 ? 1 : 0;
+        paths += '<path d="M'+cx+','+cy+' L'+p1.x.toFixed(2)+','+p1.y.toFixed(2)+' A'+r+','+r+' 0 '+large+' 1 '+p2.x.toFixed(2)+','+p2.y.toFixed(2)+' Z" fill="'+d.color+'"><title>'+titleText+'</title></path>';
+      }
     });
-  </script>
+    return '<svg viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'">'+paths+'</svg>';
+  }
+  function pieLegend(data){
+    var total = data.reduce(function(s,d){ return s+d.value; }, 0);
+    if (!total) return "";
+    return data.map(function(d){
+      var pct = Math.round(d.value/total*100);
+      return '<div class="legend-row"><span class="legend-swatch" style="background:'+d.color+'"></span><span class="legend-name">'+escapeHtml(d.label)+'</span><span class="legend-val">'+formatMoney(d.value)+' · '+pct+'%</span></div>';
+    }).join("");
+  }
 
-</body>
+  // ---------- SVG line chart ----------
+  function monthLabel(key){
+    var p = key.split("-"); return MONTHS_SHORT[parseInt(p[1],10)-1] + " " + p[0].slice(2);
+  }
+  function lineChartSVG(points){
+    if (points.length === 0) return '<div class="empty-note">Заполни хотя бы одно значение.</div>';
+    var w = Math.max(320, points.length*70), h = 150, pad2 = 28;
+    var values = points.map(function(p){ return p.value; });
+    var min = Math.min.apply(null, values), max = Math.max.apply(null, values);
+    if (min === max) { min -= 1; max += 1; }
+    var stepX = points.length > 1 ? (w-2*pad2)/(points.length-1) : 0;
+    function xFor(i){ return pad2 + i*stepX; }
+    function yFor(v){ return h-pad2 - (v-min)/(max-min)*(h-2*pad2); }
+    var d = points.map(function(p,i){ return (i===0?"M":"L") + xFor(i).toFixed(1) + "," + yFor(p.value).toFixed(1); }).join(" ");
+    var circles = points.map(function(p,i){
+      return '<circle cx="'+xFor(i).toFixed(1)+'" cy="'+yFor(p.value).toFixed(1)+'" r="3.5" fill="#c96442"><title>'+monthLabel(p.month)+": "+formatMoney(p.value)+'</title></circle>';
+    }).join("");
+    var labels = points.map(function(p,i){
+      return '<text x="'+xFor(i).toFixed(1)+'" y="'+(h-6)+'" font-size="9" text-anchor="middle" fill="#888888">'+monthLabel(p.month)+'</text>';
+    }).join("");
+    return '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:'+h+'px" preserveAspectRatio="none">' +
+      '<path d="'+d+'" fill="none" stroke="#c96442" stroke-width="2"/>' + circles + labels + '</svg>';
+  }
+  function sortedMonthKeys(map){
+    return Object.keys(map).sort();
+  }
+  function nextMonthKey(key){
+    var p = key.split("-"); var y = parseInt(p[0],10), m = parseInt(p[1],10);
+    m++; if (m>12){ m=1; y++; } return y+"-"+pad(m);
+  }
+  function prevMonthKey(key){
+    var p = key.split("-"); var y = parseInt(p[0],10), m = parseInt(p[1],10);
+    m--; if (m<1){ m=12; y--; } return y+"-"+pad(m);
+  }
+
+  function loadLocal(){
+    try { var raw = localStorage.getItem("finance-tracker-state"); return raw ? JSON.parse(raw) : null; }
+    catch(e){ return null; }
+  }
+  function saveLocal(){
+    try { localStorage.setItem("finance-tracker-state", JSON.stringify(state)); } catch(e){}
+  }
+  function scheduleSave(){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(doSave, 700);
+  }
+  function doSave(){
+    if (storageMode === "artifact" && artifactApi) {
+      artifactApi.publish(renderDocument(state)).catch(function(err){
+        if (err && err.code !== "conflict") { storageMode = "local"; saveLocal(); }
+      });
+    } else {
+      saveLocal();
+    }
+  }
+
+  // ---------- rendering ----------
+  function renderApp(){
+    var el = document.getElementById("app");
+    if (!el) return;
+    el.innerHTML = renderBody(state);
+    attachHandlers();
+  }
+
+  function renderBody(s){
+    var t = totals(s);
+    var html = "";
+    html += '<h1>Финансы</h1>';
+    html += '<div class="sub">Доходы, расходы и цели — в рублях</div>';
+    html += '<div class="tabs">';
+    ["overview","transactions","goals","settings"].forEach(function(v){
+      var labels = { overview:"Обзор", transactions:"Операции", goals:"Цели", settings:"Настройки" };
+      html += '<button class="tab-btn'+(s.view===v?" active":"")+'" data-action="set-view" data-view="'+v+'">'+labels[v]+'</button>';
+    });
+    html += '</div>';
+
+    if (s.view === "overview") html += '<div id="overviewRoot">' + renderOverview(s, t) + '</div>';
+    else if (s.view === "transactions") html += renderTransactions(s);
+    else if (s.view === "goals") html += renderGoals(s);
+    else if (s.view === "settings") html += renderSettings(s);
+
+    html += '<div class="footer-space"></div>';
+    return html;
+  }
+
+  function refreshOverview(){
+    var el = document.getElementById("overviewRoot");
+    if (el) { el.innerHTML = renderOverview(state, totals(state)); }
+    else { renderApp(); }
+  }
+
+  function renderOverview(s, t){
+    var html = '<div class="card">';
+    html += '<h2>Баланс</h2>';
+    html += '<div class="balance-big'+(t.balance<0?" negative":"")+'">'+formatMoney(t.balance)+'</div>';
+    html += '<div class="balance-sub"><span>Доходы: <span class="income-val">'+formatMoney(t.income)+'</span></span><span>Расходы: <span class="expense-val">'+formatMoney(t.expense)+'</span></span></div>';
+    html += '</div>';
+
+    html += renderPieSection(s);
+    html += renderMonthlyBalanceSection(s);
+
+    if (s.goals.length > 0) {
+      html += '<div class="card">';
+      html += '<h2>Цели</h2>';
+      s.goals.forEach(function(g){
+        var saved = goalSaved(s, g.id);
+        var pct = g.target ? Math.min(100, Math.round(saved/g.target*100)) : 0;
+        html += '<div class="bar-row">';
+        html += '<div class="bar-label"><span>'+escapeHtml(g.name)+'</span><span>'+pct+'%</span></div>';
+        html += '<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:var(--accent)"></div></div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    return html;
+  }
+
+  function renderPieSection(s){
+    var bounds = periodBounds(s.pieRange);
+    var filtered = filterByPeriod(s.transactions, bounds);
+    var expenseData = aggregateByCategory(filtered, "expense", getExpenseCat);
+    var incomeData = aggregateByCategory(filtered, "income", getIncomeCat);
+
+    var html = '<div class="card">';
+    html += '<h2>Диаграммы по категориям</h2>';
+    html += '<div class="row">';
+    html += '<select id="pieRangeMode">';
+    [["allTime","Всё время"],["thisMonth","Этот месяц"],["lastMonth","Прошлый месяц"],["thisYear","Этот год"],["custom","Свой период"]].forEach(function(o){
+      html += '<option value="'+o[0]+'"'+(s.pieRange.mode===o[0]?" selected":"")+'>'+o[1]+'</option>';
+    });
+    html += '</select>';
+    html += '</div>';
+    if (s.pieRange.mode === "custom") {
+      html += '<div class="row date-range-row">';
+      html += '<label class="date-field"><span>С</span><input type="date" id="pieRangeStart" value="'+(s.pieRange.start||"")+'"></label>';
+      html += '<label class="date-field"><span>По</span><input type="date" id="pieRangeEnd" value="'+(s.pieRange.end||"")+'"></label>';
+      html += '</div>';
+    }
+
+    html += '<div class="pie-cols">';
+    html += '<div class="pie-col"><div class="pie-col-title">Расходы</div>' + pieSVG(expenseData, 160) + '<div class="legend">' + pieLegend(expenseData) + '</div></div>';
+    html += '<div class="pie-col"><div class="pie-col-title">Доходы</div>' + pieSVG(incomeData, 160) + '<div class="legend">' + pieLegend(incomeData) + '</div></div>';
+    html += '</div>';
+    html += '</div>';
+    return html;
+  }
+
+  function renderMonthlyBalanceSection(s){
+    var keys = sortedMonthKeys(s.monthlyBalances);
+    if (keys.length === 0) {
+      s.monthlyBalances[todayStr().slice(0,7)] = s.monthlyBalances[todayStr().slice(0,7)] || null;
+      keys = sortedMonthKeys(s.monthlyBalances);
+    }
+    var points = keys.filter(function(k){ return typeof s.monthlyBalances[k] === "number"; })
+      .map(function(k){ return { month: k, value: s.monthlyBalances[k] }; });
+
+    var html = '<div class="card">';
+    html += '<h2>Баланс на 1-е число месяца</h2>';
+    html += '<div class="chart-scroll">' + lineChartSVG(points) + '</div>';
+    html += '<div class="row" style="margin-top:6px">';
+    html += '<button data-action="add-month-before" data-month="'+keys[0]+'">← более ранний месяц</button>';
+    html += '<button data-action="add-month-after" data-month="'+keys[keys.length-1]+'">следующий месяц →</button>';
+    html += '</div>';
+    keys.forEach(function(k){
+      var val = s.monthlyBalances[k];
+      html += '<div class="month-input-row"><span class="month-input-label">'+monthLabel(k)+'</span><input type="number" step="1" data-action="month-balance-input" data-month="'+k+'" value="'+(val===null||val===undefined?"":val)+'" placeholder="Сумма, ₽"><button class="del-btn" data-action="del-month" data-month="'+k+'">✕</button></div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function catOptions(list, selectedId){
+    return list.map(function(c){
+      return '<option value="'+c.id+'"'+(c.id===selectedId?' selected':'')+'>'+escapeHtml(c.name)+'</option>';
+    }).join("") + '<option value="__new__">+ новая категория</option>';
+  }
+
+  function renderTransactions(s){
+    var html = '<div class="card">';
+    html += '<h2>Добавить операцию</h2>';
+    html += '<div class="row">';
+    html += '<select id="newType"><option value="expense">Расход</option><option value="income">Доход</option></select>';
+    html += '<select id="newCat">'+catOptions(s.expenseCategories, null)+'</select>';
+    html += '</div>';
+    html += '<div class="row" id="newCatInlineRow" style="display:none">';
+    html += '<input type="text" id="newCatInline" placeholder="Название новой категории">';
+    html += '</div>';
+    html += '<div class="row">';
+    html += '<input type="date" id="newDate" value="'+todayStr()+'">';
+    html += '<input type="number" id="newAmount" placeholder="Сумма, ₽" min="0" step="1">';
+    html += '</div>';
+    html += '<div class="row">';
+    html += '<input type="text" id="newNote" placeholder="Заметка (необязательно)">';
+    html += '<button class="btn-primary" data-action="add-tx">Добавить</button>';
+    html += '</div>';
+    html += '</div>';
+
+    if (s.transactions.length === 0) {
+      html += '<div class="empty-note">Пока нет операций.</div>';
+      return html;
+    }
+    var byDate = {};
+    s.transactions.forEach(function(t){
+      if (!byDate[t.date]) byDate[t.date] = [];
+      byDate[t.date].push(t);
+    });
+    var dates = Object.keys(byDate).sort().reverse();
+    dates.forEach(function(date){
+      html += '<div class="day-group">';
+      html += '<div class="day-title">' + humanDate(date) + '</div>';
+      byDate[date].slice().reverse().forEach(function(t){
+        html += renderTxRow(t, s);
+      });
+      html += '</div>';
+    });
+    return html;
+  }
+
+  function renderTxRow(t, s){
+    if (t.id === editingId) return renderTxEditRow(t, s);
+    var cat = getCat(t);
+    var html = '<div class="tx-item">';
+    html += '<span class="cat-chip" style="background:'+cat.color+'">'+escapeHtml(cat.name)+'</span>';
+    html += '<span class="tx-note">'+(t.note ? escapeHtml(t.note) : "")+'</span>';
+    html += '<span class="tx-amount '+t.type+'">'+(t.type==="income"?"+":"−")+formatMoney(t.amount).replace("−","")+'</span>';
+    html += '<button class="edit-btn" data-action="edit-tx" data-id="'+t.id+'" title="Редактировать">✎</button>';
+    html += '<button class="del-btn" data-action="del-tx" data-id="'+t.id+'">✕</button>';
+    html += '</div>';
+    return html;
+  }
+
+  function renderTxEditRow(t, s){
+    var list = t.type === "income" ? s.incomeCategories : s.expenseCategories;
+    var html = '<div class="tx-item edit-row">';
+    html += '<div class="row">';
+    html += '<select id="editType_'+t.id+'"><option value="expense"'+(t.type==="expense"?" selected":"")+'>Расход</option><option value="income"'+(t.type==="income"?" selected":"")+'>Доход</option></select>';
+    html += '<select id="editCat_'+t.id+'">'+catOptions(list, t.categoryId)+'</select>';
+    html += '</div>';
+    html += '<div class="row">';
+    html += '<input type="date" id="editDate_'+t.id+'" value="'+t.date+'">';
+    html += '<input type="number" id="editAmount_'+t.id+'" value="'+t.amount+'" min="0" step="1">';
+    html += '</div>';
+    html += '<div class="row">';
+    html += '<input type="text" id="editNote_'+t.id+'" value="'+(t.note?escapeHtml(t.note):"")+'" placeholder="Заметка">';
+    html += '</div>';
+    html += '<div class="row">';
+    html += '<button class="btn-primary" data-action="save-tx-edit" data-id="'+t.id+'">Сохранить</button>';
+    html += '<button data-action="cancel-tx-edit" data-id="'+t.id+'">Отмена</button>';
+    html += '</div>';
+    html += '</div>';
+    return html;
+  }
+
+  function readTxEditForm(id, fallbackCategoryId){
+    var typeEl = document.getElementById("editType_"+id);
+    var catEl = document.getElementById("editCat_"+id);
+    var dateEl = document.getElementById("editDate_"+id);
+    var amountEl = document.getElementById("editAmount_"+id);
+    var noteEl = document.getElementById("editNote_"+id);
+    var amount = parseFloat(amountEl.value);
+    if (!amount || amount <= 0) return null;
+    var categoryId = catEl.value === "__new__" ? fallbackCategoryId : catEl.value;
+    return { type: typeEl.value, categoryId: categoryId, date: dateEl.value, amount: amount, note: noteEl.value.trim() };
+  }
+
+  function renderGoals(s){
+    var html = '<div class="card">';
+    html += '<h2>Новая цель</h2>';
+    html += '<div class="row">';
+    html += '<input type="text" id="newGoalName" placeholder="Название цели">';
+    html += '<input type="number" id="newGoalTarget" placeholder="Сумма, ₽" min="1" step="1">';
+    html += '</div>';
+    html += '<button class="btn-primary" data-action="add-goal">Создать цель</button>';
+    html += '</div>';
+
+    if (s.goals.length === 0) {
+      html += '<div class="empty-note">Пока нет целей.</div>';
+      return html;
+    }
+    s.goals.forEach(function(g){
+      var saved = goalSaved(s, g.id);
+      var pct = g.target ? Math.min(100, Math.round(saved/g.target*100)) : 0;
+      html += '<div class="card goal-card">';
+      html += '<div class="goal-title"><span class="name">'+escapeHtml(g.name)+'</span><span class="pct">'+pct+'%</span></div>';
+      html += '<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:var(--accent)"></div></div>';
+      html += '<div class="goal-amounts">'+formatMoney(saved)+' из '+formatMoney(g.target)+'</div>';
+      html += '<div class="goal-actions">';
+      html += '<input type="number" id="contrib_'+g.id+'" placeholder="Сумма пополнения" min="1" step="1" style="flex:1">';
+      html += '<button class="btn-primary" data-action="contribute" data-id="'+g.id+'">Пополнить</button>';
+      html += '<button class="del-btn" data-action="del-goal" data-id="'+g.id+'">✕</button>';
+      html += '</div>';
+      html += '</div>';
+    });
+    return html;
+  }
+
+  function renderSettings(s){
+    var html = '<div class="card">';
+    html += '<h2>Категории доходов</h2>';
+    s.incomeCategories.forEach(function(c){
+      html += '<div class="cat-list-row"><span class="cat-chip" style="background:'+c.color+'">'+escapeHtml(c.name)+'</span><button class="del-btn" data-action="del-income-cat" data-id="'+c.id+'">удалить</button></div>';
+    });
+    html += '<div class="row" style="margin-top:8px"><input type="text" id="newIncomeCatName" placeholder="Название категории"><button data-action="add-income-cat">Добавить</button></div>';
+    html += '</div>';
+
+    html += '<div class="card">';
+    html += '<h2>Категории расходов</h2>';
+    s.expenseCategories.forEach(function(c){
+      html += '<div class="cat-list-row"><span class="cat-chip" style="background:'+c.color+'">'+escapeHtml(c.name)+'</span><button class="del-btn" data-action="del-expense-cat" data-id="'+c.id+'">удалить</button></div>';
+    });
+    html += '<div class="row" style="margin-top:8px"><input type="text" id="newExpenseCatName" placeholder="Название категории"><button data-action="add-expense-cat">Добавить</button></div>';
+    html += '</div>';
+
+    html += '<div class="card">';
+    html += '<h2>Сброс</h2>';
+    html += '<button data-action="reset-all">Удалить все операции и цели</button>';
+    html += '</div>';
+    return html;
+  }
+
+  // ---------- full document ----------
+  function renderDocument(s){
+    var headHtml = document.head.outerHTML;
+    var bodyInner = '<div class="wrap" id="app">' + renderBody(s) + '</div>' +
+      '<script id="state-holder" type="application/json">' + JSON.stringify(s).replace(/</g,"\\u003c") + '<\/script>' +
+      document.getElementById("main-script").outerHTML +
+      document.getElementById("app-script").outerHTML;
+    return '<!doctype html>\n<html lang="ru">\n' + headHtml + '\n<body>' + bodyInner + '</body>\n</html>';
+  }
+
+  // ---------- events ----------
+  function attachHandlers(){
+    var app = document.getElementById("app");
+    app.onclick = function(e){
+      var el = e.target.closest("[data-action]");
+      if (!el) return;
+      var action = el.getAttribute("data-action");
+
+      if (action === "set-view") {
+        state.view = el.getAttribute("data-view");
+        renderApp();
+
+      } else if (action === "add-tx") {
+        var typeEl = document.getElementById("newType");
+        var catEl = document.getElementById("newCat");
+        var dateEl = document.getElementById("newDate");
+        var amountEl = document.getElementById("newAmount");
+        var noteEl = document.getElementById("newNote");
+        var amount = parseFloat(amountEl.value);
+        if (!amount || amount <= 0) return;
+        var catId = catEl.value;
+        if (catId === "__new__") {
+          var inlineEl = document.getElementById("newCatInline");
+          var name = inlineEl ? inlineEl.value.trim() : "";
+          if (!name) return;
+          catId = "cat_" + Date.now();
+          var list = typeEl.value === "income" ? state.incomeCategories : state.expenseCategories;
+          list.push({ id: catId, name: name, color: PALETTE[list.length % PALETTE.length] });
+        }
+        state.transactions.push({
+          id: newId(), type: typeEl.value, categoryId: catId, date: dateEl.value,
+          amount: amount, note: noteEl.value.trim()
+        });
+        renderApp();
+        scheduleSave();
+
+      } else if (action === "edit-tx") {
+        editingId = el.getAttribute("data-id");
+        renderApp();
+      } else if (action === "cancel-tx-edit") {
+        editingId = null;
+        renderApp();
+      } else if (action === "save-tx-edit") {
+        var eid = el.getAttribute("data-id");
+        var origTx = state.transactions.filter(function(t){ return t.id === eid; })[0];
+        var vals = readTxEditForm(eid, origTx ? origTx.categoryId : null);
+        if (!vals) return;
+        state.transactions.forEach(function(t){ if (t.id === eid) {
+          t.type = vals.type; t.categoryId = vals.categoryId; t.date = vals.date;
+          t.amount = vals.amount; t.note = vals.note;
+        }});
+        editingId = null;
+        renderApp();
+        scheduleSave();
+      } else if (action === "del-tx") {
+        var did = el.getAttribute("data-id");
+        handleConfirmClick(el, function(){
+          state.transactions = state.transactions.filter(function(t){ return t.id !== did; });
+          renderApp();
+          scheduleSave();
+        });
+
+      } else if (action === "add-goal") {
+        var nameEl = document.getElementById("newGoalName");
+        var targetEl = document.getElementById("newGoalTarget");
+        var target = parseFloat(targetEl.value);
+        if (!nameEl.value.trim() || !target || target <= 0) return;
+        state.goals.push({ id: newId(), name: nameEl.value.trim(), target: target });
+        renderApp();
+        scheduleSave();
+      } else if (action === "del-goal") {
+        var gid = el.getAttribute("data-id");
+        handleConfirmClick(el, function(){
+          state.goals = state.goals.filter(function(g){ return g.id !== gid; });
+          renderApp();
+          scheduleSave();
+        });
+      } else if (action === "contribute") {
+        var goalId = el.getAttribute("data-id");
+        var inp = document.getElementById("contrib_"+goalId);
+        var amt = parseFloat(inp.value);
+        if (!amt || amt <= 0) return;
+        var goal = state.goals.filter(function(g){ return g.id === goalId; })[0];
+        state.transactions.push({
+          id: newId(), type: "expense", categoryId: "savings", date: todayStr(),
+          amount: amt, note: "Пополнение цели: " + (goal ? goal.name : ""), goalId: goalId
+        });
+        renderApp();
+        scheduleSave();
+
+      } else if (action === "add-income-cat") {
+        var n1 = document.getElementById("newIncomeCatName");
+        if (!n1.value.trim()) return;
+        state.incomeCategories.push({ id: "cat_"+Date.now(), name: n1.value.trim(), color: PALETTE[state.incomeCategories.length % PALETTE.length] });
+        renderApp();
+        scheduleSave();
+      } else if (action === "del-income-cat") {
+        var cid1 = el.getAttribute("data-id");
+        handleConfirmClick(el, function(){
+          state.incomeCategories = state.incomeCategories.filter(function(c){ return c.id !== cid1; });
+          renderApp();
+          scheduleSave();
+        });
+      } else if (action === "add-expense-cat") {
+        var n2 = document.getElementById("newExpenseCatName");
+        if (!n2.value.trim()) return;
+        state.expenseCategories.push({ id: "cat_"+Date.now(), name: n2.value.trim(), color: PALETTE[state.expenseCategories.length % PALETTE.length] });
+        renderApp();
+        scheduleSave();
+      } else if (action === "del-expense-cat") {
+        var cid2 = el.getAttribute("data-id");
+        handleConfirmClick(el, function(){
+          state.expenseCategories = state.expenseCategories.filter(function(c){ return c.id !== cid2; });
+          renderApp();
+          scheduleSave();
+        });
+      } else if (action === "reset-all") {
+        handleConfirmClick(el, function(){
+          state.transactions = [];
+          state.goals = [];
+          renderApp();
+          scheduleSave();
+        });
+      } else if (action === "add-month-before") {
+        var mb = el.getAttribute("data-month");
+        var newKeyB = prevMonthKey(mb);
+        if (!(newKeyB in state.monthlyBalances)) state.monthlyBalances[newKeyB] = null;
+        refreshOverview();
+        scheduleSave();
+      } else if (action === "add-month-after") {
+        var ma = el.getAttribute("data-month");
+        var newKeyA = nextMonthKey(ma);
+        if (!(newKeyA in state.monthlyBalances)) state.monthlyBalances[newKeyA] = null;
+        refreshOverview();
+        scheduleSave();
+      } else if (action === "del-month") {
+        var mkey = el.getAttribute("data-month");
+        handleConfirmClick(el, function(){
+          delete state.monthlyBalances[mkey];
+          refreshOverview();
+          scheduleSave();
+        });
+      }
+    };
+
+    app.onchange = function(e){
+      var el = e.target;
+      if (el.getAttribute && el.getAttribute("data-action") === "month-balance-input") {
+        var month = el.getAttribute("data-month");
+        var val = el.value === "" ? null : parseFloat(el.value);
+        state.monthlyBalances[month] = (val===null || isNaN(val)) ? null : val;
+        scheduleSave();
+        refreshOverview();
+      } else if (el.id === "pieRangeMode") {
+        state.pieRange.mode = el.value;
+        if (el.value === "custom" && !state.pieRange.start && !state.pieRange.end) {
+          var now = new Date();
+          function fmt2(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+          state.pieRange.start = fmt2(new Date(now.getFullYear(), now.getMonth(), 1));
+          state.pieRange.end = fmt2(now);
+        }
+        scheduleSave();
+        refreshOverview();
+      } else if (el.id === "pieRangeStart") {
+        state.pieRange.start = el.value;
+        scheduleSave();
+        refreshOverview();
+      } else if (el.id === "pieRangeEnd") {
+        state.pieRange.end = el.value;
+        scheduleSave();
+        refreshOverview();
+      } else if (el.id && el.id.indexOf("editType_") === 0) {
+        var eid2 = el.id.slice("editType_".length);
+        var catSel2 = document.getElementById("editCat_"+eid2);
+        if (catSel2) {
+          var list2 = el.value === "income" ? state.incomeCategories : state.expenseCategories;
+          catSel2.innerHTML = catOptions(list2, null);
+        }
+      }
+    };
+
+    // dynamic type->category sync in add-transaction form
+    var typeSel = document.getElementById("newType");
+    var catSelEl = document.getElementById("newCat");
+    var inlineRow = document.getElementById("newCatInlineRow");
+    if (typeSel) {
+      typeSel.addEventListener("change", function(){
+        var catSel = document.getElementById("newCat");
+        var list = typeSel.value === "income" ? state.incomeCategories : state.expenseCategories;
+        catSel.innerHTML = catOptions(list, null);
+        if (inlineRow) inlineRow.style.display = "none";
+      });
+    }
+    if (catSelEl) {
+      catSelEl.addEventListener("change", function(){
+        if (inlineRow) inlineRow.style.display = catSelEl.value === "__new__" ? "flex" : "none";
+      });
+    }
+  }
+
+  // ---------- init ----------
+  function init(){
+    var hasArtifactRuntime = !!(window.claude && window.claude.use);
+    var embedded = null;
+    var holder = document.getElementById("state-holder");
+    if (holder && holder.textContent.trim()) {
+      try { embedded = JSON.parse(holder.textContent); } catch(e) { embedded = null; }
+    }
+    var local = loadLocal();
+    // Внутри Claude Artifacts опубликованный JSON — источник правды (его перезаписывает publish()).
+    // При обычном открытии файла в браузере источник правды — localStorage, иначе правки
+    // терялись бы при каждой перезагрузке, откатываясь к состоянию, зашитому в файл.
+    if (hasArtifactRuntime) {
+      state = embedded || local || INITIAL_STATE;
+    } else {
+      state = local || embedded || INITIAL_STATE;
+    }
+    if (!state.view) state.view = "overview";
+    renderApp();
+
+    if (hasArtifactRuntime) {
+      window.claude.use("artifact").then(function(api){
+        if (api) { artifactApi = api; storageMode = "artifact"; }
+        else { storageMode = "local"; }
+      }).catch(function(){ storageMode = "local"; });
+    } else {
+      storageMode = "local";
+    }
+  }
+
+  window.__financeInit = init;
+})();
+</script><script id="app-script">
+  window.__financeInit && window.__financeInit();
+</script></body>
 </html>
