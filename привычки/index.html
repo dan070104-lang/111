@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Привычки — трекер</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <h1>Привычки</h1>
+  <nav class="tabs">
+    <button class="tab-btn active" data-view="today">Сегодня</button>
+    <button class="tab-btn" data-view="habits">Привычки</button>
+    <button class="tab-btn" data-view="stats">Статистика</button>
+  </nav>
+</header>
+
+<main id="app">
+
+  <section id="view-today" class="view active">
+    <div class="today-summary" id="today-summary"></div>
+    <div id="today-list" class="habit-list"></div>
+    <p id="today-empty" class="empty-hint" hidden>На сегодня нет запланированных привычек. Добавьте их во вкладке «Привычки».</p>
+  </section>
+
+  <section id="view-habits" class="view">
+    <div class="section-head">
+      <h2>Мои привычки</h2>
+      <button id="btn-add-habit" class="btn-primary">+ Новая привычка</button>
+    </div>
+    <div id="habits-list" class="habits-manage-list"></div>
+
+    <div class="section-head backup-head">
+      <h2>Резервная копия</h2>
+    </div>
+    <div class="backup-controls">
+      <button id="btn-export" class="btn-secondary">Экспорт в файл</button>
+      <label class="btn-secondary file-label">
+        Импорт из файла
+        <input type="file" id="input-import" accept="application/json" hidden>
+      </label>
+    </div>
+  </section>
+
+  <section id="view-stats" class="view">
+    <div class="section-head">
+      <h2>Статистика</h2>
+      <div class="month-picker">
+        <button id="stats-prev" class="btn-icon">‹</button>
+        <span id="stats-month-label"></span>
+        <button id="stats-next" class="btn-icon">›</button>
+      </div>
+    </div>
+    <div id="stats-total" class="stats-total"></div>
+    <div id="stats-days" class="stats-days"></div>
+    <table class="stats-table">
+      <thead>
+        <tr><th>Привычка</th><th>Выполнено</th><th>Ожидалось</th><th>%</th></tr>
+      </thead>
+      <tbody id="stats-table-body"></tbody>
+    </table>
+  </section>
+
+</main>
+
+<div id="modal-backdrop" class="modal-backdrop" hidden>
+  <div id="modal" class="modal"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
