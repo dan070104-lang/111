@@ -71,6 +71,7 @@
   }
 
   var state = load();
+  var storageBroken = false;
 
   function load() {
     try {
@@ -85,9 +86,35 @@
     }
   }
 
+  // localStorage can throw (Safari blocks it for file:// pages, private-mode
+  // quotas, etc). Never let that abort an in-progress action: catch it, warn
+  // once, and keep going with in-memory state so clicks still take effect.
   function save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      if (!storageBroken) {
+        storageBroken = true;
+        showStorageWarning();
+      }
+    }
   }
+
+  function showStorageWarning() {
+    var el = document.getElementById("storage-warning");
+    if (el) el.hidden = false;
+  }
+
+  (function checkStorageAvailable() {
+    try {
+      var testKey = STORAGE_KEY + "_test";
+      localStorage.setItem(testKey, "1");
+      localStorage.removeItem(testKey);
+    } catch (e) {
+      storageBroken = true;
+      showStorageWarning();
+    }
+  })();
 
   // ---------- habit schedule logic ----------
 
